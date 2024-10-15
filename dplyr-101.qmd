@@ -152,7 +152,7 @@ white_wine |>
 white_wine |> 
   select(where(\(x) is.numeric(x) & (max(x) < 5)))
 ```
-
+2 ways to select either on names or select on the properties of the columns (without considering the names). As the data frame is a list we apply to each of the column either true or false. is numeric test if the content of the column is numeric, then if it is true it does the second action. 
 ### Selecting rows
 
 Simple selection is based on indices with `slice()`. 
@@ -164,7 +164,7 @@ white_wine |>
   knitr::kable()
 ```
 
-Condition based selection uses `filter()`.
+Condition based selection uses `filter()`. Slice operates on the the number rendering. Filter with a condition gives the column where the condition is true. 
 
 ```{r}
 white_wine |> 
@@ -206,3 +206,46 @@ white_wine |>
   facet_wrap(vars(`alcohol category`))
 ```
 
+## Aggregation functions: 
+Aka summary functions: turn a possibly long vector into a single value (still a vector!)
+
+- standard statistics : `max(), min(), median() `etc. 
+- Logical operation: `any(), all`
+- Counts: `n()`
+
+### Simple summary use: 
+Based on the `summarise()`
+
+```{r}
+white_wine |> 
+  summarise(
+    med_alcohol= median(alcohol), ## name the col
+                        sd(alcohol))
+```
+```{r}
+white_wine |>
+  select(alcohol) |>
+  mutate(m_a= median(alcohol)) ## no summary so it will give the medoan 4898 times for all the levels of alcohol.
+```
+```{r}
+white_wine |> 
+  select(alcohol) |>
+  mutate(a_m_median= alcohol-median(alcohol),
+         .keep="none")
+```
+```{r}
+white_wine |> 
+  select(alcohol) |>
+  mutate(na= (alcohol -mean(alcohol))/sd(alcohol),
+         na_r = (alcohol-median(alcohol))/ IQR(alcohol),
+         .keep="none")
+```
+```{r}
+white_wine |> 
+  select(alcohol) |>
+  summarise(mean(alcohol),
+            sd(alcohol),
+            median(alcohol),
+            IQR(alcohol))
+```
+IQR >sd the alcohol value is over dispersed compared to the gaussian distribution. 
