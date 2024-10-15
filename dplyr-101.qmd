@@ -214,7 +214,7 @@ Aka summary functions: turn a possibly long vector into a single value (still a 
 - Counts: `n()`
 
 ### Simple summary use: 
-Based on the `summarise()`
+Based on the `summarise()` function or inside mutate. 
 
 ```{r}
 white_wine |> 
@@ -249,3 +249,34 @@ white_wine |>
             IQR(alcohol))
 ```
 IQR >sd the alcohol value is over dispersed compared to the gaussian distribution. 
+
+### More complex summary functions: 
+Enssentially `quantile()`. 
+```{r}
+quantile(white_wine$`residual sugar`)
+```
+The vector containes the min and max values (0%, 100%) and then the three quarters. There is a long tail because 75% have low level but a long tail to the 100%. 
+```{r}
+quantile(white_wine$`residual sugar`, probs=seq(0,1, 0.1))
+```
+```{r}
+mean(white_wine$`residual sugar`)
+```
+Larger than the median, but between 50% and 60%, so no big values effect. 
+```{r}
+white_wine |>
+  summarise(quantile(`residual sugar`))
+```
+
+```{r}
+white_wine |>
+  reframe(quantile(`residual sugar`), 
+          mean(`residual sugar`))
+```
+Does the same thing but summarise does more, so this functionnality is being switch to reframe. Just one data frame so the mean repeats itself. 
+```{r}
+suager_stats <- white_wine |>
+  summarise(list(quantile(`residual sugar`)), 
+                 mean(`residual sugar`))
+```
+
