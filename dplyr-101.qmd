@@ -274,9 +274,50 @@ white_wine |>
           mean(`residual sugar`))
 ```
 Does the same thing but summarise does more, so this functionnality is being switch to reframe. Just one data frame so the mean repeats itself. 
+To not use reframe: 
 ```{r}
-suager_stats <- white_wine |>
+sugar_stats <- white_wine |>
   summarise(list(quantile(`residual sugar`)), 
                  mean(`residual sugar`))
 ```
 
+### Group_by: 
+```{r}
+white_wine |> 
+  summarise(median(`residual sugar`), 
+            .by= quality) |>
+  arrange(quality)
+```
+Create subgroups of the data set given a characteristic.The arrange give the list in a croissant order. There is no obvious link. 
+```{r}
+white_wine |> 
+  summarise(median(`residual sugar`),
+            n(),
+            .by= quality) |>
+  arrange(quality)
+```
+Adding n() gives the count of each variable used to do the median. 
+```{r}
+white_wine |> 
+  summarise(median(`residual sugar`),
+            n(),
+            .by= alcohol)
+```
+Doing this grouping by a value whom there are a lot in the data might not be relevant because n() will be very low by category. 
+```{r}
+white_wine |> 
+  mutate(ha=alcohol>= 13) |>
+  summarise(median(`residual sugar`),
+            n(),
+            .by= ha)
+```
+mutating by ha to give a condition for the level of high alcohol so the table show us if the values are in ha or not and give us the median in each category. 
+```{r}
+white_wine |> 
+  mutate(alcohol_class =cut(alcohol, breaks= c(7,9, 10, 12, 13, 15), 
+                            ordered_result = TRUE)) |>
+  summarise(median(`residual sugar`),
+            n(),
+            .by= `alcohol_class`)
+```
+Decoupe the values into different categories and we do breaks to give intervals, the intervals have to start before or at the smallest value and vice versa. 
