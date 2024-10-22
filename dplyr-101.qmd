@@ -296,6 +296,7 @@ white_wine |>
             .by= quality) |>
   arrange(quality)
 ```
+Collects the different values of quality and extract the rows, and apply the summary function we chose. Arrange is sorting the content. 
 Adding n() gives the count of each variable used to do the median. 
 ```{r}
 white_wine |> 
@@ -311,7 +312,8 @@ white_wine |>
             n(),
             .by= ha)
 ```
-mutating by ha to give a condition for the level of high alcohol so the table show us if the values are in ha or not and give us the median in each category. 
+Create two groups on a condition, we define with mutate the new vairabke, and grouping by it.
+Mutating by ha to give a condition for the level of high alcohol so the table show us if the values are in ha or not and give us the median in each category. 
 ```{r}
 white_wine |> 
   mutate(alcohol_class =cut(alcohol, breaks= c(7,9, 10, 12, 13, 15), 
@@ -320,4 +322,56 @@ white_wine |>
             n(),
             .by= `alcohol_class`)
 ```
-Decoupe the values into different categories and we do breaks to give intervals, the intervals have to start before or at the smallest value and vice versa. 
+Decoupe the values into different categories and we do breaks to give intervals, the intervals have to start before or at the smallest value and vice versa. Cut is always producing discrete variables. 
+```{r}
+library(ggplot2)
+white_wine |> 
+  mutate(alcohol_class =cut(alcohol, breaks= c(7,9, 10, 12, 13, 15), 
+                            ordered_result = TRUE)) |>
+  ggplot(aes(x=alcohol_class))+
+  geom_bar()
+```
+We can't have the conditional distribution of quality given alcohol because it is not discrete. 
+```{r}
+white_wine |> 
+  mutate(alcohol_class =cut(alcohol, breaks= c(7,9, 10, 12, 13, 15), 
+                            ordered_result = TRUE)) |>
+  ggplot(aes(x=alcohol_class, fill=quality))+
+  geom_bar(position="fill")
+```
+Cutting into classes, using on the x axis with quality, and filling the bars with the quality. 
+```{r}
+white_wine|>
+  pull(alcohol) |>
+  quantile(probs= seq(0,1, by=0.2))
+```
+we take the quantile with the probabilities cut in a sequence from 0 to 1 by 20% sections. 
+
+```{r}
+alcohol_quantiles <- 
+white_wine|>
+  pull(alcohol) |>
+  quantile(probs= seq(0,1, by=0.1))
+alcohol_quantiles
+```
+
+```{r}
+alcohol_quantiles[1] <- alcohol_quantiles[1] -1
+alcohol_quantiles
+```
+We want to modify only the first value of the vector. 
+```{r}
+white_wine |> 
+  mutate(alcohol_class =cut(alcohol, breaks= alcohol_quantiles), 
+                            ordered_result = TRUE) |>
+  ggplot(aes(x=alcohol_class))+
+  geom_bar()
+```
+
+```{r}
+white_wine |> 
+  mutate(alcohol_class =cut(alcohol, breaks= alcohol_quantiles), 
+                            ordered_result = TRUE) |>
+  ggplot(aes(x=alcohol_class, fill=quality))+
+  geom_bar(position="fill")
+```
