@@ -416,4 +416,69 @@ Will select the max value in each quality.
 white_wine |>
   mutate(avg_alcohol_quality = mean(alcohol), .by= quality)
 ```
+#### Group by 
+```{r}
+white_wine |>
+  group_by(quality)
+```
+If we apply a group to a data set, then all the other function that will be dot after will be like with a .by function. 
+```{r}
+white_wine |> 
+  group_by(quality)|>
+  summarise(mean(`citric acid`))
+## Which is the same as
+white_wine |>
+  summarise(mean(`citric acid`), .by=quality)
+```
+```{r}
+diamonds |> 
+  group_by(cut) |>
+  summarise(median(price))
+```
+```{r}
+diamonds |> 
+  group_by(cut, clarity)
+```
+40 groups because it is the multiplication of the number of groups in the two. 
 
+```{r}
+diamonds |> 
+  group_by(cut, clarity) |>
+  summarise(median(price))
+```
+40 rows because of the forty combinaison. There is a layer grouping where we group first by cut and then by clarity. 
+```{r}
+diamonds |> 
+  group_by(cut, clarity) |>
+  summarise(price_mc=median(price), .groups = "drop_last")|> 
+  summarise(mean(price_mc))
+```
+We took the average inside the median groups. 
+```{r}
+diamonds |> 
+  summarise(median(price), .by=c(cut, clarity)) |>
+  arrange(cut, clarity)
+```
+The .by combine the the two variables with c(). Without arrange the result is not sorted, but also the result is not grouped. 
+```{r}
+diamonds |> 
+  summarise(price_mc= median(price), .by=c(cut, clarity)) |>
+  summarise(mean(price_mc), .by=cut)|>
+  arrange(cut)
+```
+We have to reprcise in the second summarise that we want to be group by. We use group b rather than .by because in most case it is more efficient. 
+
+Conditional distribution of color(y) given cut(x): 
+```{r}
+diamonds |> 
+  group_by(cut, color) |>
+  summarise(N=n(), .groups= "drop_last")
+```
+We want to count the number of obersvations. 
+```{r}
+diamonds |> 
+  group_by(cut, color) |>
+  summarise(N=n(), .groups= "drop_last")|>
+  summarise(sum(N))
+```
+The summarise(sum(N)) is going to only do the values on the cut group. 
