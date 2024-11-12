@@ -32,6 +32,36 @@ Enleve les variables qui sont NA. And remove things that are not numbers.We want
 
 Is `ProductID` a valid **primary key**: `r pid_nb == nrow(products)`. 
 
+## Foreign keys: 
+```{r}
+library(readr)
+categories <- read_csv(here("northwind", "northwind","Categories.csv"),
+                       col_types = "icc-")
+```
+
+Is `CategoryID` column is the  **primary key** of the `categories` table. The `products` table has a `CategoryID`column which is likelu to be a **foreing key** referencing the primery fey of `categories`
+
+## Join:
+A **join** operation is a way to combine two tables into a single one by selecting a subset of the cartesian product between two tables. 
+The ** natural join* selects only pairs of tuples (row of the column) that have the sale values en the columns that have the same name. `inner join`in dplyr implements by default the natural joint. 
+
+```{r}
+p_c <-
+  products|>
+  inner_join(categories)
+```
+The 2nd tables is the first argument in inner join.
+
+```{r}
+products |>
+  mutate(CategoryID= CategoryID-1)|>
+  inner_join(categories)
+```
+It takes out the products of the category 1, there are only 65 observations, the 12 missing were the one where the category changed. In this case as expected, tuples with no match are removed from the result. In this case, tuples with no match are removed from the result. 
+We can verify that `category ID`is a foreign key by counting the number of tuples in the result. Here this is : `r nom(p_c)== nrow(products)`. 
+
+
+
 
 
 
