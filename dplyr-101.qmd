@@ -187,8 +187,15 @@ white_wine |>
 ```
 
 ```{r}
+white_wine |>
+  mutate(`alcohol category` = case_when(alcohol <= 9 ~ "low",
+                                        alcohol >= 13 ~ "high",
+                                        .default = "medium"))
+```
+
+```{r}
 white_wine |> 
-  filter(alcohol <= 9) |>
+    filter(alcohol <= 9) |>
   ggplot(aes(x=`citric acid`, y=`residual sugar`, color = alcohol)) +
   geom_point(alpha=0.75) +
   scale_color_viridis_c()
@@ -307,6 +314,11 @@ white_wine |>
 Doing this grouping by a value whom there are a lot in the data might not be relevant because n() will be very low by category. 
 ```{r}
 white_wine |> 
+  mutate(ha=alcohol>= 13)
+```
+
+```{r}
+white_wine |> 
   mutate(ha=alcohol>= 13) |>
   summarise(median(`residual sugar`),
             n(),
@@ -392,7 +404,6 @@ Give the first five value of the data frame on the first two columns.
 white_wine |>
   slice(1:5, .by=quality)|>
   select(1:2 | quality)
-  
 ```
 Fives rows per quality. 
 ```{r}
@@ -456,7 +467,7 @@ diamonds |>
 We took the average inside the median groups. 
 ```{r}
 diamonds |> 
-  summarise(median(price), .by=c(cut, clarity)) |>
+  summarise(median(price), .by=c(cut, clarity))|>
   arrange(cut, clarity)
 ```
 The .by combine the the two variables with c(). Without arrange the result is not sorted, but also the result is not grouped. 
@@ -481,6 +492,11 @@ diamonds |>
   summarise(N=n(), .groups= "drop_last")|>
   summarise(sum(N))
 ```
+```{r}
+diamonds|>
+  summarise(N=n(), .by = cut)
+```
+
 The summarise(sum(N)) is going to only do the values on the cut group. 
 ```{r}
 diamonds |> 
@@ -493,7 +509,7 @@ Probs of being in the faire group.
 ```{r}
 diamonds |>
   summarise(N=n(), .by=c(cut, color)) |>
-  mutate(prob=N/sum(N), .by=cut) |>
+  mutate(prob=N/sum(N), .by=c(cut)) |>
   arrange(cut, color)
 ```
 We divide by the total N is we don't add .by cut in the last one. 

@@ -138,3 +138,98 @@ world_bank_pop |>
   theme(legend.position= "right")+
   scale_y_continuous(transform= "log10")
 ```
+
+## Nesting: 
+```{r}
+class(diamonds)
+```
+```{r}
+df_list <- tibble(x=1:3,
+                  y=letters[1:3],
+                  z=list(1,2,3))
+df_list
+```
+The vectors are doubles and have lenghts 1 because they have a single value. 
+```{r}
+df_list <- tibble(x=1:3,
+                  y=letters[1:3],
+                  z=list(c(1,2),c("ALice, Bob, Charlie"),3))
+df_list
+```
+Because it is a list we can have everything we want in the columns. 
+
+```{r}
+df_list <- data.frame(x=1:3,
+                  y=letters[1:3],
+                  z=I(list(c(1,2),c("ALice, Bob, Charlie"),3)))
+df_list
+```
+The I() before list will tell R to not try to change z in a 1*3 vector. 
+### Linear models
+We want to know if the price of diamounds can be predicted given all the other categories. 
+We use lm and tell the predicted variable. Price as a (~) function of . (all variables including a constant/intercept)
+```{r}
+#| cache: true
+diamonds_price_lm= lm(price ~ ., data=diamonds)
+diamonds_price_lm
+```
+Coefficient: large intercept, big influence of carat, cut has a negative effect. 
+```{r}
+summary(diamonds_price_lm)
+```
+```{r}
+plot(diamonds_price_lm)
+```
+QQ plot ... 
+we want to split the data into deffierent subset and do a linear model for each subset. 
+```{r}
+diamonds |>
+  nest(.by=cut)
+```
+Nesting over groups, for each of the group we get a data tibble. 
+```{r}
+#| cache: true
+diamonds_cut_lm <-
+  diamonds |>
+  nest(.by=cut)|>
+  mutate(sub_lm= lapply(data, \(x) lm(price~., data=diamonds)))
+```
+apply a new function to the list, data= to the component of data, we apply the fucntion x to call the linear model. 
+```{r}
+library(broom)
+diamonds_cut_lm <-
+  diamonds_cut_lm |>
+  mutate(tlm= lapply(sub_lm, tidy))
+```
+
+```{r}
+diamonds |>
+  nest(.by=cut)|>
+  unest(data)
+```
+
+```{r}
+diamonds_cut_lm |>
+  select(cut, tlm)|>
+  unnest(tlm)
+```
+We have the cut and all the coefficents, the erro and p value, 
+```{r}
+diamonds_cut_lm |>
+  select(cut, tlm)|>
+  unnest(tlm)|>
+  select(cut, term, estimate)
+  pivot_wider(names_from = term,
+              values_from = estimate)
+```
+The cuts are rowes, and the columns are coefficients. On this model the additive effect does not work because somme effect are positive for all cuts but fair, and vice versa. 
+```{r}
+diamonds_cut_lm |>
+  select(cut, tlm)|>
+  unnest(tlm)|>
+  filter(p.value<0.01)|>
+  select(cut, term, estimate)
+  pivot_wider(names_from = term,
+              values_from = estimate)
+```
+
