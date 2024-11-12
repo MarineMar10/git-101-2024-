@@ -1,0 +1,37 @@
+---
+title: "Multiple table"
+author: "Marine MARTINEZ"
+format: html
+---
+
+```{r}
+here::i_am("git-101-2024.Rproj")
+library(ggplot2)
+library(vroom)
+library(here)
+library(dplyr)
+library(tidyr)
+```
+
+We want to load the supplyier, the category and products. So it will be complete to describe the products. 
+
+## Primary key: 
+```{r}
+products <- vroom(here("northwind", "northwind","Products.csv"))
+```
+The product id column is the primary key of the product table. A primary key is unique, and we can't have missing value. 
+```{r}
+pid_nb <-
+  products |>
+  select(ProductID)|>
+  filter(!is.na(ProductID) & !is.nan(ProductID))|>
+  distinct(ProductID)|>
+  nrow()
+```
+Enleve les variables qui sont NA. And remove things that are not numbers.We want to know if product id is going to be a primary key, c'est le cas si  : donne TRUE.
+
+Is `ProductID` a valid **primary key**: `r pid_nb == nrow(products)`. 
+
+
+
+
