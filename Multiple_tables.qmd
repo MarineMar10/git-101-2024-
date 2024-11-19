@@ -60,8 +60,159 @@ products |>
 It takes out the products of the category 1, there are only 65 observations, the 12 missing were the one where the category changed. In this case as expected, tuples with no match are removed from the result. In this case, tuples with no match are removed from the result. 
 We can verify that `category ID`is a foreign key by counting the number of tuples in the result. Here this is : `r nom(p_c)== nrow(products)`. 
 
+## Application example: 
+We want a simple tables with the categories(given by their name), and for each category the number of products. 
 
+Broken solution: 
+```{r}
+products|>
+  summarise("Number of products" =n(), .by= CategoryID)
+```
+Real solution: 
+```{r}
+#|message: false
+products|>
+  summarise("Number of products"=n(), .by = CategoryID)|>
+  inner_join(categories |> select(!Description), 
+             by = join_by(CategoryID))|>
+  select(!CategoryID)|>
+  arrange(CategoryName)|>
+  rename(Category = CategoryName)|>
+  relocate(Category)|>
+  knitr::kable()
+```
+Summarising before joingin is good, necause we don't materialise the join over the data set. 
 
+Join then summarise: 
+```{r}
+products |>
+  select(CategoryID)|>
+  inner_join(categories |> select(Category= CategoryName, CategoryID),
+             by=join_by(CategoryID))|>
+  summarise("Number of products"= n(), .by= Category)|>
+  arrange(Category)
+```
 
+```{r}
+suppliers <- vroom(here("northwind", "northwind","Suppliers.csv"))
+```
+We want a table of countries that associate a country to the number of products that are supplied by suppliers of this country
+Join the summarise
+```{r}
+nb_per_country <-
+products |>
+  select(SupplierID)|>
+  inner_join(suppliers |> select(SupplierID, Country),
+             by= join_by(SupplierID))|>
+  summarise("Number of products"=n(), .by = Country)
+```
 
+```{r}
+nb_per_country |>
+  ggplot(aes(y=Country, x=`Number of products`))+
+  geom_col()
+```
+Geom bar is when ggplot do the compute for you and geom plot is when you did the compute first. Add an index value to help ggplot find where he should put the value. 
+```{r}
+nb_per_country |>
+  arrange(desc(`Number of products`))|>
+  mutate(idx= 1:n())|>
+  ggplot(aes(y=idx, x=`Number of products`))+
+  geom_col(orientation = "y")+
+  scale_y_continuous(breaks= nb_ind |>pull(idx),
+                   labels=nb_ind |>pull(Country) )
+```
+
+## Variation over join: 
+```{r}
+suppliers |>
+  filter(Country == "USA")|>
+  left_join(products, by= join_by(SupplierID))
+```
+Categories that are supplied by US suppliers. 
+```{r}
+cat_usa <-
+suppliers |>
+  filter(Country == "USA")|>
+  left_join(products, by= join_by(SupplierID))|>
+  distinct(CategoryID)
+```
+What are the categories not supplied by US suppliers? 
+```{r}
+categories|>
+  anti_join(cat_usa, by= join_by(CategoryID))
+```
+Anti join will keep everything that has no match. Categories that dont match in cat usa. 
+
+```{r}
+categories|>
+  semi_join(cat_usa, by= join_by(CategoryID))
+```
+With the semi join it is the one that do have a match in the categories supplied by the us.
+Direct calculation: 
+```{r}
+categories |> 
+  semi_join(
+    suppliers |>
+  filter(Country=="Germany")|>
+  left_join(products, by=join_by(SupplierID)),
+by=join_by(CategoryID))
+```
+### Outer joins: 
+```{r}
+A <- 
+  tibble(idx= 1:3, a= letters[1:3])
+B <-
+  tibble(key= 2:5, b=LETTERS[2:5])
+```
+
+This does not work because A and B do not have common variables. 
+```{r}
+#| eval: false
+A |> inner_join(B)
+```
+
+```{r}
+A |>
+  cross_join(B)
+```
+
+```{r}
+A |>
+  inner_join(B, by=join_by(idx==key))
+```
+Only 2 possible matches. 
+```{r}
+A |>
+  inner_join(B, by=join_by(idx==key))
+```
+
+```{r}
+B |> anti_join(A, by=join_by(key== idx))
+```
+```{r}
+A |>
+  left_join(B, by=join_by(idx==key))
+```
+```{r}
+A |>
+  right_join(B, by=join_by(idx==key))
+```
+```{r}
+A |>
+  full_join(B, by=join_by(idx==key))
+```
+Core inner join and the outer parts. 
+```{r}
+A <- 
+  tibble(idx= c(1:3, 2:3), a= letters[1:5])
+B <-
+  tibble(key= c(2:5,2,5) ,b=LETTERS[2:7])
+```
+
+```{r}
+A |> full_join(B, by=join_by(idx==key), 
+               multiple= "all", 
+               relationship= "many-to-many")
+```
 
